@@ -1,6 +1,6 @@
 apiVersion: v2
-name: boltz2-nim-chart
+name: boltz2-nim
 description: A Helm chart for Boltz2
 type: application
-version: 1.3.0
-appVersion: "1.3.0"
+version: 1.5.0
+appVersion: "1.5.0"
