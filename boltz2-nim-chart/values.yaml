@@ -6,7 +6,7 @@ boltz2:
   containerName: boltz2
   containerPort: 8000
   repository: nvcr.io/nvstaging/nim/boltz2
-  tag: "1.4.0-39313058"
+  tag: "1.5.0-42817345"
   pullPolicy: Always
   cacheFolder: /opt/nim/.cache
   servicePort: 8081
