@@ -1,180 +1,86 @@
-# Default values for protein-design-chart.
-
-replicaCount: 1
-
-alphafold2:
-  containerName: alphafold2
-  containerPort: 8000
-  repository: nvcr.io/nim/deepmind/alphafold2
-  tag: "2.1"
-  pullPolicy: Always
-  cacheFolder: /opt/nim/.cache
-  servicePort: 8081
-
-rfdiffusion:
-  containerName: rfdiffusion
-  containerPort: 8000
-  repository: nvcr.io/nim/ipd/rfdiffusion
-  tag: "2.0"
-  pullPolicy: Always
-  cacheFolder: /home/nvs/.cache
-  servicePort: 8082
-
-proteinmpnn:
-  containerName: proteinmpnn
-  containerPort: 8000
-  repository: nvcr.io/nim/ipd/proteinmpnn
-  tag: "1.0"
-  pullPolicy: Always
-  cacheFolder: /home/nvs/.cache
-  servicePort: 8083
-
-alphafold2multimer:
-  containerName: alphafold2-multimer
-  containerPort: 8000
-  repository: nvcr.io/nim/deepmind/alphafold2-multimer
-  tag: "2.1"
-  pullPolicy: Always
-  cacheFolder: /opt/nim/.cache
-  servicePort: 8084
-
-imagePullSecret:
-  registry: "nvcr.io"
-  name: "ngc-secret-protein-design"
-  create: true
-  username: '$oauthtoken'
-  secretName: ngc-registry-secret
-  secretKey: NGC_REGISTRY_KEY
-
-service:
-  type: ClusterIP
-
-nameOverride: ""
-fullnameOverride: ""
-
-# serviceAccount:
-#   # Specifies whether a service account should be created
-#   create: true
-#   # Annotations to add to the service account
-#   annotations: {}
-#   # The name of the service account to use.
-#   # If not set and create is true, a name is generated using the fullname template
-#   name: ""
-
-podAnnotations: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
-resources:
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  limits:
-    nvidia.com/gpu: 1
-  requests:
-    nvidia.com/gpu: 1
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-
-persistence:
-  enabled: true
-  existingClaim: ""
-  storageClass: standard
-  accessMode: ReadWriteMany
-  hostPath: /data/nim
-  size: 1.5Ti
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
+# values-openshift.yaml — OpenShift overlay for the Protein Design Blueprint.
+#
+# Usage:
+#   helm install protein-design . \
+#     -f values.yaml \
+#     -f values-openshift.yaml \
+#     --set imagePullSecret.secretName=ngc-registry-secret \
+#     -n protein-design
+#
+# This file enables OpenShift-specific resources (Routes, SCC RoleBindings)
+# and switches from standard Deployments to NIM Operator managed services.
+# Cluster-specific values (namespace, NGC keys) should be passed via --set.
 
 # ---------------------------------------------------------------------------
-# OpenShift support (disabled by default — zero impact on vanilla Kubernetes)
+# Shorten the chart fullname to avoid exceeding the 63-character DNS label
+# limit on auto-generated Route hostnames.
+# ---------------------------------------------------------------------------
+fullnameOverride: "protein-design"
+
+# ---------------------------------------------------------------------------
+# Disable standard Deployments — NIM Operator manages the NIM lifecycle.
+# ---------------------------------------------------------------------------
+replicaCount: 0
+
+# ---------------------------------------------------------------------------
+# OpenShift features
 # ---------------------------------------------------------------------------
 openshift:
-  enabled: false
+  enabled: true
 
   routes:
     alphafold2:
-      enabled: false
-      host: ""
+      enabled: true
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
     rfdiffusion:
-      enabled: false
-      host: ""
+      enabled: true
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
     proteinmpnn:
-      enabled: false
-      host: ""
+      enabled: true
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
     alphafold2multimer:
-      enabled: false
-      host: ""
+      enabled: true
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
 
-  # Creates a custom SCC (like "nonroot" but with seLinuxContext: RunAsAny)
-  # to prevent recursive SELinux relabeling on large NIM model PVCs.
+  # Creates a custom SCC (protein-design-nim) that is like "nonroot" but
+  # with seLinuxContext: RunAsAny.  This prevents the kubelet from
+  # recursively relabeling every file on mounted volumes — critical for
+  # AlphaFold2's 2TB PVCs with millions of genomic database files.
   scc:
-    create: false
-    priority: 10
+    create: true
 
 # ---------------------------------------------------------------------------
-# NGC API secret used by the NIM Operator for model downloads.
-# Must contain a key named NGC_API_KEY.
+# Override service type — Routes handle external access on OpenShift.
 # ---------------------------------------------------------------------------
-ngcApiSecret:
-  name: "ngc-api"
+service:
+  type: ClusterIP
 
 # ---------------------------------------------------------------------------
-# NIM Operator integration (disabled by default).
-# When enabled AND the NIM Operator CRD is present on the cluster, NIMCache +
-# NIMService resources are created instead of raw Deployments.
-# Set replicaCount: 0 in your overlay to disable the standard Deployments.
+# Persistence — OpenShift dynamic provisioning (no hostPath PV needed).
+# Set storageClass to match your cluster (e.g. "gp3-csi", "ocs-storagecluster-cephfs").
+# ---------------------------------------------------------------------------
+persistence:
+  enabled: true
+  storageClass: "gp3-csi"
+  accessMode: ReadWriteMany
+  size: 1.5Ti
+
+# ---------------------------------------------------------------------------
+# NIM Operator integration — each NIM gets a NIMCache + NIMService pair.
+# The NIM Operator handles model downloading, caching, and GPU scheduling.
+# Requires: NIM Operator installed, NGC image-pull and API secrets in namespace.
 # ---------------------------------------------------------------------------
 nimOperator:
   alphafold2:
-    enabled: false
+    enabled: true
     replicas: 1
     service:
       name: "alphafold2"
@@ -192,14 +98,26 @@ nimOperator:
         create: true
         size: "2000Gi"
         volumeAccessMode: ReadWriteOnce
-        storageClass: ""
+        storageClass: "gp3-csi"
     nodeSelector: {}
-    tolerations: []
+    # Tolerate GPU node taints so cache and service pods can schedule.
+    # Adjust keys to match your cluster's GPU node taints.
+    tolerations:
+      - key: g6-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+      - key: p4-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
     env:
       - name: NIM_HTTP_API_PORT
         value: "8000"
       - name: NIM_CACHE_PATH
         value: "/model-store"
+      - name: TOKENIZERS_PARALLELISM
+        value: "false"
     expose:
       service:
         name: http
@@ -216,7 +134,7 @@ nimOperator:
         failureThreshold: 720
 
   rfdiffusion:
-    enabled: false
+    enabled: true
     replicas: 1
     service:
       name: "rfdiffusion"
@@ -236,17 +154,33 @@ nimOperator:
         volumeAccessMode: ReadWriteOnce
         storageClass: ""
     nodeSelector: {}
-    tolerations: []
+    tolerations:
+      - key: g6-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+      - key: p4-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
     env:
       - name: NIM_HTTP_API_PORT
         value: "8000"
       - name: NIM_CACHE_PATH
         value: "/home/nvs/.cache/nim/models"
+      - name: TOKENIZERS_PARALLELISM
+        value: "false"
     expose:
       service:
         name: http
         type: ClusterIP
         port: 8000
+    # RFDiffusion compiles TensorRT engines on FIRST-EVER start for a given
+    # GPU architecture.  This one-time build can take 2-4 hours.  The compiled
+    # engines are cached in ephemeral container storage, so subsequent pod
+    # restarts on the same node reuse them — but a rollout (new ReplicaSet)
+    # loses the cache and forces a full rebuild.
+    # failureThreshold: 720 × periodSeconds: 30 = 6 hours headroom.
     startupProbe:
       enabled: true
       probe:
@@ -255,10 +189,10 @@ nimOperator:
           port: 8000
         initialDelaySeconds: 120
         periodSeconds: 30
-        failureThreshold: 120
+        failureThreshold: 720
 
   proteinmpnn:
-    enabled: false
+    enabled: true
     replicas: 1
     service:
       name: "proteinmpnn"
@@ -278,12 +212,22 @@ nimOperator:
         volumeAccessMode: ReadWriteOnce
         storageClass: ""
     nodeSelector: {}
-    tolerations: []
+    tolerations:
+      - key: g6-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+      - key: p4-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
     env:
       - name: NIM_HTTP_API_PORT
         value: "8000"
       - name: NIM_CACHE_PATH
         value: "/home/nvs/.cache/nim/models"
+      - name: TOKENIZERS_PARALLELISM
+        value: "false"
     expose:
       service:
         name: http
@@ -300,7 +244,7 @@ nimOperator:
         failureThreshold: 120
 
   alphafold2-multimer:
-    enabled: false
+    enabled: true
     replicas: 1
     service:
       name: "alphafold2-multimer"
@@ -318,14 +262,24 @@ nimOperator:
         create: true
         size: "2000Gi"
         volumeAccessMode: ReadWriteOnce
-        storageClass: ""
+        storageClass: "gp3-csi"
     nodeSelector: {}
-    tolerations: []
+    tolerations:
+      - key: g6-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+      - key: p4-gpu
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
     env:
       - name: NIM_HTTP_API_PORT
         value: "8000"
       - name: NIM_CACHE_PATH
         value: "/model-store"
+      - name: TOKENIZERS_PARALLELISM
+        value: "false"
     expose:
       service:
         name: http
@@ -340,4 +294,3 @@ nimOperator:
         initialDelaySeconds: 120
         periodSeconds: 30
         failureThreshold: 360
-

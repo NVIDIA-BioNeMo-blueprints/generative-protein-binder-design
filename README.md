@@ -42,6 +42,24 @@ Navigate to the [deploy](deploy) directory to learn how to start up the NIMs.
 
 Follow the instructions in the [protein-design-chart](protein-design-chart) directory and deploy the Helm chart
 
+## Deploy on OpenShift
+
+To deploy on Red Hat OpenShift AI with the NIM Operator:
+
+```bash
+cd protein-design-chart/
+helm install protein-design . \
+  -f values.yaml \
+  -f values-openshift.yaml \
+  -n protein-design
+```
+
+The OpenShift overlay enables Routes for external access, creates a custom SCC to handle
+large NIM model volumes, and uses the NIM Operator (NIMCache + NIMService) for automated
+model lifecycle management.
+See [docs/deploy-openshift.md](docs/deploy-openshift.md) for the full deployment guide,
+prerequisites, and troubleshooting.
+
 ## Notebook
 
 An example of how to call each protein binder design step is located in [src/protein-binder-design.ipynb](src/protein-binder-design.ipynb)
