@@ -2,11 +2,11 @@
 
 replicaCount: 1
 
-alphafold2:
-  containerName: alphafold2
+openfold3:
+  containerName: openfold3
   containerPort: 8000
-  repository: nvcr.io/nim/deepmind/alphafold2
-  tag: "2.1"
+  repository: nvcr.io/nim/openfold/openfold3
+  tag: "1.5"
   pullPolicy: Always
   cacheFolder: /opt/nim/.cache
   servicePort: 8081
@@ -28,15 +28,6 @@ proteinmpnn:
   pullPolicy: Always
   cacheFolder: /home/nvs/.cache
   servicePort: 8083
-
-alphafold2multimer:
-  containerName: alphafold2-multimer
-  containerPort: 8000
-  repository: nvcr.io/nim/deepmind/alphafold2-multimer
-  tag: "2.1"
-  pullPolicy: Always
-  cacheFolder: /opt/nim/.cache
-  servicePort: 8084
 
 imagePullSecret:
   registry: "nvcr.io"
@@ -113,7 +104,7 @@ persistence:
   storageClass: standard
   accessMode: ReadWriteMany
   hostPath: /data/nim
-  size: 1.5Ti
+  size: 100Gi
 
 nodeSelector: {}
 

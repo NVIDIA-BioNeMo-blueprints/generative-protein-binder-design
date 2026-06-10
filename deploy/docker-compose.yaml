@@ -1,16 +1,17 @@
 name: protein-binder-design
 
 services:
-  ## AlphaFold2
-  ## AlphaFold2 is pinned to GPU 0
-  alphafold:
-    image: nvcr.io/nim/deepmind/alphafold2:2.1
+  ## OpenFold3
+  ## OpenFold3 is pinned to GPU 0
+  openfold3:
+    image: nvcr.io/nim/openfold/openfold3:1.5
     pull_policy: always
     runtime: nvidia
     ports:
       - "8081:8000"
     volumes:
-      - ${HOST_NIM_CACHE:-~/.cache/nim}:/opt/nim/.cache/
+      - ${HOST_NIM_CACHE:-~/.cache/nim}:/home/nvs/.cache/
+    shm_size: 16g
     deploy:
       resources:
         reservations:
@@ -20,9 +21,7 @@ services:
               device_ids: ['0']
     environment:
       - NGC_API_KEY=${NGC_CLI_API_KEY:?Error NGC_CLI_API_KEY not set}
-      - NIM_CACHE_PATH=/opt/nim/.cache
-      - NIM_DISABLE_MODEL_DOWNLOAD=False ## Set this to True to disable model download.
-      - CUDA_VISIBLE_DEVICES=0
+      - NIM_CACHE_PATH=/home/nvs/.cache/nim/models
 
 
   ## RFDiffusion
@@ -65,24 +64,3 @@ services:
     environment:
       - NGC_CLI_API_KEY=${NGC_CLI_API_KEY:?Error NGC_CLI_API_KEY not set}
       - NIM_CACHE_PATH=/home/nvs/.cache/nim/models
-
-  alphafold-multimer:
-    image: nvcr.io/nim/deepmind/alphafold2-multimer:2.1
-    pull_policy: always
-    runtime: nvidia
-    ports:
-      - "8084:8000"
-    volumes:
-      - ${HOST_NIM_CACHE:-~/.cache/nim}:/opt/nim/.cache/
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: "nvidia"
-              capabilities: [gpu]
-              device_ids: ['3']
-    environment:
-      - NGC_API_KEY=${NGC_CLI_API_KEY:?Error NGC_CLI_API_KEY not set}
-      - NIM_CACHE_PATH=/opt/nim/.cache/
-      - NIM_DISABLE_MODEL_DOWNLOAD=False
-      - CUDA_VISIBILE_DEVICES=3
