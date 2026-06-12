@@ -67,11 +67,12 @@ Test pod GPU Access:
 kubectl run gpu-test1 --image=nvidia/cuda:12.6.2-base-ubuntu22.04 --restart=Never --command -- nvidia-smi
 ```
 
-Set up port forwarding to make requests from your local machine to all 3 services:
+Set up port forwarding to make requests from your local machine to all the 4 services:
 ```bash
-kubectl port-forward service/"${CHART_NAME}"-protein-design-chart-openfold3 8081:8081 & \
+kubectl port-forward service/"${CHART_NAME}"-protein-design-chart-alphafold2 8081:8081 & \
 kubectl port-forward service/"${CHART_NAME}"-protein-design-chart-rfdiffusion 8082:8082 & \
-kubectl port-forward service/"${CHART_NAME}"-protein-design-chart-proteinmpnn 8083:8083
+kubectl port-forward service/"${CHART_NAME}"-protein-design-chart-proteinmpnn 8083:8083 & \
+kubectl port-forward service/"${CHART_NAME}"-protein-design-chart-alphafold2multimer 8084:8084
 ```
 
 ## Troubleshooting and Debugging Kubernetes Pods
@@ -92,7 +93,7 @@ kubectl logs <pod_name>
 
 Open an interactive shell in a pod's container:
 ```bash
-kubectl exec -it <openfold3/rfdiffusion/proteinmpnn pod name> -- bash
+kubectl exec -it <alphafold2-multimer/rfdiffusion/proteinmpnn pod name> -- bash
 ```
 
 ## Running the Blueprint With the Helm Deployment

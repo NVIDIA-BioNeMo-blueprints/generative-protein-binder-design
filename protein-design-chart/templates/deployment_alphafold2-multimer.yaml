@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "protein-design-chart.fullname" . }}-alphafold2multimer
+  labels:
+    {{- include "protein-design-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: alphafold2multimer
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "protein-design-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: alphafold2multimer
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "protein-design-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: alphafold2multimer
+    spec:
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret.name }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.alphafold2multimer.containerName }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.alphafold2multimer.repository }}:{{ .Values.alphafold2multimer.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.alphafold2multimer.pullPolicy }}
+          env:
+            - name: NGC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.imagePullSecret.secretName }}
+                  key: {{ .Values.imagePullSecret.secretKey }}
+            - name: NIM_CACHE_PATH
+              value: {{ .Values.alphafold2multimer.cacheFolder | quote }}
+            - name: NIM_HTTP_API_PORT
+              value: {{ .Values.alphafold2multimer.containerPort | quote }}
+          volumeMounts:
+          - mountPath : {{ .Values.alphafold2multimer.cacheFolder | quote }}
+            name: af2multimer-pv1
+          ports:
+            - name: http
+              containerPort: {{ .Values.alphafold2multimer.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 10800
+            httpGet:
+              path: /v1/health/live
+              port: {{ .Values.alphafold2multimer.containerPort }}
+          readinessProbe:
+            initialDelaySeconds: 10800
+            httpGet:
+              path: /v1/health/ready
+              port: {{ .Values.alphafold2multimer.containerPort }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: af2multimer-pv1
+          persistentVolumeClaim:
+            claimName: protein-design-shared-vol
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

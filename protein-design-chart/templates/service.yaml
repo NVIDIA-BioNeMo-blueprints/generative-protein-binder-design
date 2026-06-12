@@ -2,7 +2,7 @@
 {{- $labels := include "protein-design-chart.labels" . -}}
 {{- $selectorLabels := include "protein-design-chart.selectorLabels" . -}}
 
-{{- $services := list "openfold3" "rfdiffusion" "proteinmpnn" -}}
+{{- $services := list "alphafold2" "rfdiffusion" "proteinmpnn" "alphafold2multimer" -}}
 
 {{- range $serviceName := $services }}
 ---

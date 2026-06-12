@@ -60,14 +60,6 @@ docker compose up
 ```
 
 This will first pull the containers then start them. When the containers start they will
-pull the model for each NIM. The OpenFold3 NIM downloads approximately 10 GB of model data on
-first run and typically becomes ready within a few minutes. Other NIMs may take additional time
-depending on your internet connection.
-
-Check that OpenFold3 is ready:
-
-```bash
-curl localhost:8081/v1/health/ready
-```
-
-For more details on the OpenFold3 API, see the [NVIDIA NIM for OpenFold3 documentation](https://docs.nvidia.com/nim/bionemo/openfold3/latest/overview.html).
+pull the model for each NIM. This process can take several hours; in the case of AlphaFold2
+and other large models, **expect the model download step to take from three to seven hours**
+even on a fast internet connection.
