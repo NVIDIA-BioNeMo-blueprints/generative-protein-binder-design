@@ -60,12 +60,6 @@ spec:
               value: {{ .Values.boltz2.cacheFolder }}
             - name: NIM_HTTP_API_PORT
               value: {{ .Values.boltz2.containerPort | quote }}
-            - name: NIM_BOLTZ_STRUCTURE_OPTIMIZED_BACKEND
-              value: {{ .Values.boltz2.structureOptimizedBackend | quote }}
-            - name: NIM_BOLTZ_AFFINITY_OPTIMIZED_BACKEND
-              value: {{ .Values.boltz2.affinityOptimizedBackend | quote }}
-            - name: NIM_BOLTZ_ENABLE_DIFFUSION_TF32
-              value: {{ .Values.boltz2.enableDiffusionTF32 | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.boltz2.containerPort }}

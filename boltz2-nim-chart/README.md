@@ -85,9 +85,6 @@ Edit `values.yaml` file to modify configuration:
 ### Boltz2 Container Configuration
 - `boltz2.repository`: Docker image repository
 - `boltz2.tag`: Docker image tag
-- `boltz2.structureOptimizedBackend`: Backend type for structure prediction - "trt" or "pytorch" (default: "trt")
-- `boltz2.affinityOptimizedBackend`: Backend type for affinity binding - "trt" or "pytorch" (default: "trt")
-- `boltz2.enableDiffusionTF32`: Enable TensorFloat-32 - "0" or "1" (default: "1")
 
 ## Uninstall
 

@@ -6,13 +6,10 @@ boltz2:
   containerName: boltz2
   containerPort: 8000
   repository: nvcr.io/nvstaging/nim/boltz2
-  tag: "1.7.0-build.1-3fc5c7c2955690df"
+  tag: "1.8.0-12f2aaac8ed23a63"
   pullPolicy: Always
   cacheFolder: /opt/nim/.cache
   servicePort: 8081
-  structureOptimizedBackend: "trt"
-  affinityOptimizedBackend: "trt"
-  enableDiffusionTF32: "1"
 
 imagePullSecret:
   registry: "nvcr.io"
